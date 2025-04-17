@@ -1,0 +1,18 @@
+$table->id();
+            $table->unsignedBigInteger('category_id');
+            $table->string('product_name');
+            $table->string('product_photo')->nullable();
+            $table->decimal('product_price', 10, 2);
+            $table->text('product_description');
+            $table->tinyInteger('is_active')->default(1);
+            $table->timestamps();
+
+            $table->foreign('caregory_id')->references('id')->non('categories')->onDelete('cascade');
+        });
+
+          $table->id();
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->string('password');
+            $table->timestamps();
+        });
