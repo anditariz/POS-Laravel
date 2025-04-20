@@ -10,30 +10,30 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\TransactionController;
 
 Route::get('/', function () {
-    return view('login');
+    return redirect()->route('dashboard.index');
 });
 
-Route::get('belajar', [BelajarController::class, 'index']);
-Route::get('tambah', [BelajarController::class, 'tambah']);
-Route::get('kurang', [BelajarController::class, 'kurang']);
+// Route::get('belajar', [BelajarController::class, 'index']);
+// Route::get('tambah', [BelajarController::class, 'tambah']);
+// Route::get('kurang', [BelajarController::class, 'kurang']);
 
-Route::get('login', [LoginController::class, 'login'])->name('login');
-Route::post('action-login', [LoginController::class, 'actionLogin']);
+// Route::get('login', [LoginController::class, 'login'])->name('login');
+// Route::post('action-login', [LoginController::class, 'actionLogin']);
 
-Route::post('actionTambah', [BelajarController::class, 'actionTambah']);
-Route::post('actionKurang', [BelajarController::class, 'actionKurang']);
+// Route::post('actionTambah', [BelajarController::class, 'actionTambah']);
+// Route::post('actionKurang', [BelajarController::class, 'actionKurang']);
 
 Route::resource('dashboard', DashboardController::class);
-Route::resource('categories', CategoriesController::class);
-Route::resource('products', ProductController::class);
-route::resource('pos', TransactionController::class);
+// Route::resource('categories', CategoriesController::class);
+// Route::resource('products', ProductController::class);
+// route::resource('pos', TransactionController::class);
 
-Route::get('get-product/{id}', [TransactionController::class, 'getProduct']);
-
-
-Route::resource('users', controller: UserController::class);
-route::get('logout', [LoginController::class, 'logout']);
+// Route::get('get-product/{id}', [TransactionController::class, 'getProduct']);
 
 
-route::get('print/{id}', [TransactionController::class, 'print'])->name('print');
+// Route::resource('users', controller: UserController::class);
+// route::get('logout', [LoginController::class, 'logout']);
+
+
+// route::get('print/{id}', [TransactionController::class, 'print'])->name('print');
 

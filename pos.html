@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Modern POS System</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        />
+        <style>
+            @media print {
+                body * {
+                    visibility: hidden;
+                }
+                #receipt-print,
+                #receipt-print * {
+                    visibility: visible;
+                }
+                #receipt-print {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                }
+                .no-print {
+                    display: none !important;
+                }
+            }
+            .fade-in {
+                animation: fadeIn 0.3s ease-in-out;
+            }
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                }
+                to {
+                    opacity: 1;
+                }
+            }
+            .slide-up {
+                animation: slideUp 0.3s ease-out;
+            }
+            @keyframes slideUp {
+                from {
+                    transform: translateY(20px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+        </style>
+    </head>
+    <body class="bg-gray-100 font-sans">
+        <!-- Main Container -->
+        <div class="min-h-screen flex flex-col">
+            <!-- Header -->
+            <header class="bg-indigo-600 text-white shadow-lg">
+                <div
+                    class="container mx-auto px-4 py-4 flex justify-between items-center"
+                >
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-cash-register text-2xl"></i>
+                        <h1 class="text-2xl font-bold">Modern POS</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span id="current-time" class="text-sm"></span>
+                        <button
+                            id="toggle-theme"
+                            class="p-2 rounded-full hover:bg-indigo-500 transition"
+                        >
+                            <i class="fas fa-moon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <div class="flex flex-1 overflow-hidden">
+                <!-- Sidebar -->
+                <aside class="w-64 bg-white shadow-md hidden md:block">
+                    <nav class="p-4">
+                        <ul class="space-y-2">
+                            <li>
+                                <button
+                                    id="pos-tab"
+                                    class="w-full flex items-center space-x-3 p-3 rounded-lg bg-indigo-100 text-indigo-700 font-medium"
+                                >
+                                    <i class="fas fa-shopping-cart"></i>
+                                    <span>POS</span>
+                                </button>
+                            </li>
+                            <li>
+                                <button
+                                    id="products-tab"
+                                    class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 text-gray-700 transition"
+                                >
+                                    <i class="fas fa-boxes"></i>
+                                    <span>Products</span>
+                                </button>
+                            </li>
+                            <li>
+                                <button
+                                    id="sales-tab"
+                                    class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 text-gray-700 transition"
+                                >
+                                    <i class="fas fa-chart-line"></i>
+                                    <span>Sales Report</span>
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
+                </aside>
+
+                <!-- Mobile Sidebar Toggle -->
+                <div class="md:hidden fixed bottom-4 right-4 z-50">
+                    <button
+                        id="mobile-menu-toggle"
+                        class="p-4 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition"
+                    >
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Mobile Sidebar -->
+                <div
+                    id="mobile-sidebar"
+                    class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden"
+                >
+                    <div
+                        class="absolute right-0 top-0 h-full w-64 bg-white shadow-lg transform translate-x-full transition duration-300"
+                    >
+                        <div
+                            class="p-4 flex justify-between items-center border-b"
+                        >
+                            <h2 class="text-lg font-semibold">Menu</h2>
+                            <button
+                                id="close-mobile-menu"
+                                class="p-2 rounded-full hover:bg-gray-100"
+                            >
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <nav class="p-4">
+                            <ul class="space-y-2">
+                                <li>
+                                    <button
+                                        id="mobile-pos-tab"
+                                        class="w-full flex items-center space-x-3 p-3 rounded-lg bg-indigo-100 text-indigo-700 font-medium"
+                                    >
+                                        <i class="fas fa-shopping-cart"></i>
+                                        <span>POS</span>
+                                    </button>
+                                </li>
+                                <li>
+                                    <button
+                                        id="mobile-products-tab"
+                                        class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 text-gray-700 transition"
+                                    >
+                                        <i class="fas fa-boxes"></i>
+                                        <span>Products</span>
+                                    </button>
+                                </li>
+                                <li>
+                                    <button
+                                        id="mobile-sales-tab"
+                                        class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 text-gray-700 transition"
+                                    >
+                                        <i class="fas fa-chart-line"></i>
+                                        <span>Sales Report</span>
+                                    </button>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Main Panel -->
+                <main class="flex-1 overflow-auto p-4">
+                    <!-- POS Section -->
+                    <div id="pos-section" class="space-y-6">
+                        <div class="flex flex-col md:flex-row gap-6">
+                            <!-- Product Grid -->
+                            <div
+                                class="flex-1 bg-white rounded-xl shadow-md p-4"
+                            >
+                                <div
+                                    class="flex justify-between items-center mb-4"
+                                >
+                                    <h2
+                                        class="text-xl font-semibold text-gray-800"
+                                    >
+                                        Products
+                                    </h2>
+                                    <div class="relative">
+                                        <input
+                                            type="text"
+                                            placeholder="Search products..."
+                                            class="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        />
+                                        <i
+                                            class="fas fa-search absolute left-3 top-3 text-gray-400"
+                                        ></i>
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+                                    id="product-grid"
+                                >
+                                    <!-- Products will be loaded here -->
+                                </div>
+                            </div>
+
+                            <!-- Cart Section -->
+                            <div
+                                class="w-full md:w-96 bg-white rounded-xl shadow-md p-4"
+                            >
+                                <div
+                                    class="flex justify-between items-center mb-4"
+                                >
+                                    <h2
+                                        class="text-xl font-semibold text-gray-800"
+                                    >
+                                        Current Order
+                                    </h2>
+                                    <button
+                                        id="clear-cart"
+                                        class="text-red-500 hover:text-red-700"
+                                    >
+                                        <i class="fas fa-trash-alt"></i> Clear
+                                    </button>
+                                </div>
+
+                                <div
+                                    class="space-y-4 mb-4 max-h-96 overflow-y-auto"
+                                    id="cart-items"
+                                >
+                                    <!-- Cart items will be loaded here -->
+                                    <div
+                                        class="text-center text-gray-500 py-10"
+                                    >
+                                        <i
+                                            class="fas fa-shopping-cart text-4xl mb-2"
+                                        ></i>
+                                        <p>Your cart is empty</p>
+                                    </div>
+                                </div>
+
+                                <div class="border-t pt-4">
+                                    <div class="flex justify-between mb-2">
+                                        <span class="font-medium"
+                                            >Subtotal:</span
+                                        >
+                                        <span id="subtotal">$0.00</span>
+                                    </div>
+                                    <div class="flex justify-between mb-2">
+                                        <span class="font-medium"
+                                            >Tax (10%):</span
+                                        >
+                                        <span id="tax">$0.00</span>
+                                    </div>
+                                    <div
+                                        class="flex justify-between mb-4 font-bold text-lg"
+                                    >
+                                        <span>Total:</span>
+                                        <span id="total">$0.00</span>
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <button
+                                            id="checkout-btn"
+                                            class="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition disabled:opacity-50"
+                                            disabled
+                                        >
+                                            <i
+                                                class="fas fa-credit-card mr-2"
+                                            ></i>
+                                            Checkout
+                                        </button>
+                                        <button
+                                            id="print-receipt-btn"
+                                            class="w-full bg-gray-200 text-gray-800 py-3 rounded-lg font-medium hover:bg-gray-300 transition disabled:opacity-50"
+                                            disabled
+                                        >
+                                            <i class="fas fa-print mr-2"></i>
+                                            Print Receipt
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Products Management Section -->
+                    <div id="products-section" class="hidden">
+                        <div class="bg-white rounded-xl shadow-md p-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h2
+                                    class="text-2xl font-semibold text-gray-800"
+                                >
+                                    Product Management
+                                </h2>
+                                <button
+                                    id="add-product-btn"
+                                    class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition flex items-center"
+                                >
+                                    <i class="fas fa-plus mr-2"></i> Add Product
+                                </button>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table
+                                    class="min-w-full divide-y divide-gray-200"
+                                >
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                            >
+                                                Image
+                                            </th>
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                            >
+                                                Name
+                                            </th>
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                            >
+                                                Category
+                                            </th>
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                            >
+                                                Price
+                                            </th>
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                            >
+                                                Stock
+                                            </th>
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                            >
+                                                Actions
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody
+                                        class="bg-white divide-y divide-gray-200"
+                                        id="products-table-body"
+                                    >
+                                        <!-- Products will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sales Report Section -->
+                    <div id="sales-section" class="hidden">
+                        <div class="bg-white rounded-xl shadow-md p-6">
+                            <h2
+                                class="text-2xl font-semibold text-gray-800 mb-6"
+                            >
+                                Sales Report
+                            </h2>
+
+                            <div
+                                class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6"
+                            >
+                                <div
+                                    class="bg-indigo-50 p-4 rounded-lg border border-indigo-100"
+                                >
+                                    <div
+                                        class="flex justify-between items-start"
+                                    >
+                                        <div>
+                                            <p
+                                                class="text-sm text-indigo-600 font-medium"
+                                            >
+                                                Today's Sales
+                                            </p>
+                                            <p
+                                                class="text-2xl font-bold text-gray-800 mt-1"
+                                            >
+                                                $<span id="today-sales"
+                                                    >0.00</span
+                                                >
+                                            </p>
+                                        </div>
+                                        <div
+                                            class="bg-indigo-100 p-2 rounded-lg"
+                                        >
+                                            <i
+                                                class="fas fa-calendar-day text-indigo-600"
+                                            ></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="bg-green-50 p-4 rounded-lg border border-green-100"
+                                >
+                                    <div
+                                        class="flex justify-between items-start"
+                                    >
+                                        <div>
+                                            <p
+                                                class="text-sm text-green-600 font-medium"
+                                            >
+                                                This Week
+                                            </p>
+                                            <p
+                                                class="text-2xl font-bold text-gray-800 mt-1"
+                                            >
+                                                $<span id="week-sales"
+                                                    >0.00</span
+                                                >
+                                            </p>
+                                        </div>
+                                        <div
+                                            class="bg-green-100 p-2 rounded-lg"
+                                        >
+                                            <i
+                                                class="fas fa-calendar-week text-green-600"
+                                            ></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="bg-purple-50 p-4 rounded-lg border border-purple-100"
+                                >
+                                    <div
+                                        class="flex justify-between items-start"
+                                    >
+                                        <div>
+                                            <p
+                                                class="text-sm text-purple-600 font-medium"
+                                            >
+                                                This Month
+                                            </p>
+                                            <p
+                                                class="text-2xl font-bold text-gray-800 mt-1"
+                                            >
+                                                $<span id="month-sales"
+                                                    >0.00</span
+                                                >
+                                            </p>
+                                        </div>
+                                        <div
+                                            class="bg-purple-100 p-2 rounded-lg"
+                                        >
+                                            <i
+                                                class="fas fa-calendar-alt text-purple-600"
+                                            ></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <canvas
+                                    id="sales-chart"
+                                    class="w-full h-64"
+                                ></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+
+        <!-- Product Modal -->
+        <div
+            id="product-modal"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+        >
+            <div
+                class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 slide-up"
+            >
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold" id="modal-title">
+                            Add New Product
+                        </h3>
+                        <button
+                            id="close-modal"
+                            class="text-gray-500 hover:text-gray-700"
+                        >
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <form id="product-form" class="space-y-4">
+                        <input type="hidden" id="product-id" />
+
+                        <div>
+                            <label
+                                for="product-name"
+                                class="block text-sm font-medium text-gray-700 mb-1"
+                                >Product Name</label
+                            >
+                            <input
+                                type="text"
+                                id="product-name"
+                                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label
+                                for="product-category"
+                                class="block text-sm font-medium text-gray-700 mb-1"
+                                >Category</label
+                            >
+                            <select
+                                id="product-category"
+                                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                required
+                            >
+                                <option value="">Select a category</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Food">Food</option>
+                                <option value="Beverages">Beverages</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label
+                                for="product-price"
+                                class="block text-sm font-medium text-gray-700 mb-1"
+                                >Price ($)</label
+                            >
+                            <input
+                                type="number"
+                                id="product-price"
+                                min="0"
+                                step="0.01"
+                                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label
+                                for="product-stock"
+                                class="block text-sm font-medium text-gray-700 mb-1"
+                                >Stock Quantity</label
+                            >
+                            <input
+                                type="number"
+                                id="product-stock"
+                                min="0"
+                                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label
+                                for="product-image"
+                                class="block text-sm font-medium text-gray-700 mb-1"
+                                >Image URL</label
+                            >
+                            <input
+                                type="text"
+                                id="product-image"
+                                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                placeholder="https://example.com/image.jpg"
+                            />
+                        </div>
+
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button
+                                type="button"
+                                id="cancel-product"
+                                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                            >
+                                Save Product
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Receipt Modal -->
+        <div
+            id="receipt-modal"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+        >
+            <div
+                class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 slide-up"
+            >
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold">Order Receipt</h3>
+                        <button
+                            id="close-receipt"
+                            class="text-gray-500 hover:text-gray-700"
+                        >
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <div id="receipt-print" class="bg-white p-4">
+                        <div class="text-center mb-4">
+                            <h2 class="text-xl font-bold">Modern POS</h2>
+                            <p class="text-sm text-gray-600">
+                                123 Business Street, City
+                            </p>
+                            <p class="text-sm text-gray-600">
+                                Tel: (123) 456-7890
+                            </p>
+                        </div>
+
+                        <div class="border-t border-b py-2 my-2">
+                            <div class="flex justify-between text-sm">
+                                <span>Date:</span>
+                                <span id="receipt-date">2023-06-15 14:30</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span>Order #:</span>
+                                <span id="receipt-order-id">ORD-12345</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div
+                                class="grid grid-cols-12 gap-2 text-sm font-medium border-b pb-1 mb-1"
+                            >
+                                <div class="col-span-6">Item</div>
+                                <div class="col-span-2 text-right">Qty</div>
+                                <div class="col-span-2 text-right">Price</div>
+                                <div class="col-span-2 text-right">Total</div>
+                            </div>
+
+                            <div id="receipt-items">
+                                <!-- Receipt items will be loaded here -->
+                            </div>
+
+                            <div class="border-t pt-2 mt-2">
+                                <div class="flex justify-between text-sm">
+                                    <span>Subtotal:</span>
+                                    <span id="receipt-subtotal">$0.00</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span>Tax (10%):</span>
+                                    <span id="receipt-tax">$0.00</span>
+                                </div>
+                                <div class="flex justify-between font-bold">
+                                    <span>Total:</span>
+                                    <span id="receipt-total">$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center text-xs text-gray-500 mt-4">
+                            <p>Thank you for your purchase!</p>
+                            <p>Please come again</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 pt-4 no-print">
+                        <button
+                            id="print-receipt"
+                            class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center"
+                        >
+                            <i class="fas fa-print mr-2"></i> Print Receipt
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Sample data
+            let products = [
+                {
+                    id: 1,
+                    name: "Laptop",
+                    category: "Electronics",
+                    price: 999.99,
+                    stock: 15,
+                    image: "https://images.unsplash.com/photo-1496181133205-80b9f5853137?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
+                },
+                {
+                    id: 2,
+                    name: "Smartphone",
+                    category: "Electronics",
+                    price: 699.99,
+                    stock: 30,
+                    image: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
+                },
+                {
+                    id: 3,
+                    name: "Headphones",
+                    category: "Electronics",
+                    price: 149.99,
+                    stock: 50,
+                    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
+                },
+                {
+                    id: 4,
+                    name: "T-Shirt",
+                    category: "Clothing",
+                    price: 19.99,
+                    stock: 100,
+                    image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=880&q=80",
+                },
+                {
+                    id: 5,
+                    name: "Coffee",
+                    category: "Beverages",
+                    price: 4.99,
+                    stock: 200,
+                    image: "https://images.unsplash.com/photo-1517705008128-361805f42e86?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
+                },
+                {
+                    id: 6,
+                    name: "Chocolate Bar",
+                    category: "Food",
+                    price: 2.99,
+                    stock: 150,
+                    image: "https://images.unsplash.com/photo-1575377427642-087cf684f29d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
+                },
+            ];
+
+            let cart = [];
+            let sales = [];
+            let currentTab = "pos";
+            let isDarkMode = false;
+
+            // DOM Elements
+            const posSection = document.getElementById("pos-section");
+            const productsSection = document.getElementById("products-section");
+            const salesSection = document.getElementById("sales-section");
+            const productGrid = document.getElementById("product-grid");
+            const cartItems = document.getElementById("cart-items");
+            const subtotalEl = document.getElementById("subtotal");
+            const taxEl = document.getElementById("tax");
+            const totalEl = document.getElementById("total");
+            const checkoutBtn = document.getElementById("checkout-btn");
+            const printReceiptBtn =
+                document.getElementById("print-receipt-btn");
+            const clearCartBtn = document.getElementById("clear-cart");
+            const addProductBtn = document.getElementById("add-product-btn");
+            const productsTableBody = document.getElementById(
+                "products-table-body"
+            );
+            const productModal = document.getElementById("product-modal");
+            const productForm = document.getElementById("product-form");
+            const productIdInput = document.getElementById("product-id");
+            const productNameInput = document.getElementById("product-name");
+            const productCategoryInput =
+                document.getElementById("product-category");
+            const productPriceInput = document.getElementById("product-price");
+            const productStockInput = document.getElementById("product-stock");
+            const productImageInput = document.getElementById("product-image");
+            const modalTitle = document.getElementById("modal-title");
+            const closeModalBtn = document.getElementById("close-modal");
+            const cancelProductBtn = document.getElementById("cancel-product");
+            const receiptModal = document.getElementById("receipt-modal");
+            const closeReceiptBtn = document.getElementById("close-receipt");
+            const printReceiptBtnModal =
+                document.getElementById("print-receipt");
+            const receiptItems = document.getElementById("receipt-items");
+            const receiptSubtotal = document.getElementById("receipt-subtotal");
+            const receiptTax = document.getElementById("receipt-tax");
+            const receiptTotal = document.getElementById("receipt-total");
+            const receiptDate = document.getElementById("receipt-date");
+            const receiptOrderId = document.getElementById("receipt-order-id");
+            const todaySalesEl = document.getElementById("today-sales");
+            const weekSalesEl = document.getElementById("week-sales");
+            const monthSalesEl = document.getElementById("month-sales");
+            const toggleThemeBtn = document.getElementById("toggle-theme");
+            const mobileMenuToggle =
+                document.getElementById("mobile-menu-toggle");
+            const mobileSidebar = document.getElementById("mobile-sidebar");
+            const closeMobileMenu =
+                document.getElementById("close-mobile-menu");
+            const currentTimeEl = document.getElementById("current-time");
+
+            // Tab buttons
+            const posTab = document.getElementById("pos-tab");
+            const productsTab = document.getElementById("products-tab");
+            const salesTab = document.getElementById("sales-tab");
+            const mobilePosTab = document.getElementById("mobile-pos-tab");
+            const mobileProductsTab = document.getElementById(
+                "mobile-products-tab"
+            );
+            const mobileSalesTab = document.getElementById("mobile-sales-tab");
+
+            // Initialize
+            document.addEventListener("DOMContentLoaded", () => {
+                updateCurrentTime();
+                setInterval(updateCurrentTime, 1000);
+
+                loadProducts();
+                renderProductGrid();
+                renderProductsTable();
+                updateCartUI();
+                updateSalesSummary();
+
+                // Set default tab
+                showTab("pos");
+            });
+
+            // Update current time
+            function updateCurrentTime() {
+                const now = new Date();
+                currentTimeEl.textContent = now.toLocaleString();
+            }
+
+            // Tab navigation
+            function showTab(tabName) {
+                currentTab = tabName;
+
+                // Hide all sections
+                posSection.classList.add("hidden");
+                productsSection.classList.add("hidden");
+                salesSection.classList.add("hidden");
+
+                // Remove active class from all tabs
+                posTab.classList.remove("bg-indigo-100", "text-indigo-700");
+                posTab.classList.add("hover:bg-gray-100", "text-gray-700");
+                productsTab.classList.remove(
+                    "bg-indigo-100",
+                    "text-indigo-700"
+                );
+                productsTab.classList.add("hover:bg-gray-100", "text-gray-700");
+                salesTab.classList.remove("bg-indigo-100", "text-indigo-700");
+                salesTab.classList.add("hover:bg-gray-100", "text-gray-700");
+
+                mobilePosTab.classList.remove(
+                    "bg-indigo-100",
+                    "text-indigo-700"
+                );
+                mobilePosTab.classList.add(
+                    "hover:bg-gray-100",
+                    "text-gray-700"
+                );
+                mobileProductsTab.classList.remove(
+                    "bg-indigo-100",
+                    "text-indigo-700"
+                );
+                mobileProductsTab.classList.add(
+                    "hover:bg-gray-100",
+                    "text-gray-700"
+                );
+                mobileSalesTab.classList.remove(
+                    "bg-indigo-100",
+                    "text-indigo-700"
+                );
+                mobileSalesTab.classList.add(
+                    "hover:bg-gray-100",
+                    "text-gray-700"
+                );
+
+                // Show selected section and set active tab
+                switch (tabName) {
+                    case "pos":
+                        posSection.classList.remove("hidden");
+                        posTab.classList.add(
+                            "bg-indigo-100",
+                            "text-indigo-700"
+                        );
+                        posTab.classList.remove(
+                            "hover:bg-gray-100",
+                            "text-gray-700"
+                        );
+                        mobilePosTab.classList.add(
+                            "bg-indigo-100",
+                            "text-indigo-700"
+                        );
+                        mobilePosTab.classList.remove(
+                            "hover:bg-gray-100",
+                            "text-gray-700"
+                        );
+                        break;
+                    case "products":
+                        productsSection.classList.remove("hidden");
+                        productsTab.classList.add(
+                            "bg-indigo-100",
+                            "text-indigo-700"
+                        );
+                        productsTab.classList.remove(
+                            "hover:bg-gray-100",
+                            "text-gray-700"
+                        );
+                        mobileProductsTab.classList.add(
+                            "bg-indigo-100",
+                            "text-indigo-700"
+                        );
+                        mobileProductsTab.classList.remove(
+                            "hover:bg-gray-100",
+                            "text-gray-700"
+                        );
+                        break;
+                    case "sales":
+                        salesSection.classList.remove("hidden");
+                        salesTab.classList.add(
+                            "bg-indigo-100",
+                            "text-indigo-700"
+                        );
+                        salesTab.classList.remove(
+                            "hover:bg-gray-100",
+                            "text-gray-700"
+                        );
+                        mobileSalesTab.classList.add(
+                            "bg-indigo-100",
+                            "text-indigo-700"
+                        );
+                        mobileSalesTab.classList.remove(
+                            "hover:bg-gray-100",
+                            "text-gray-700"
+                        );
+                        break;
+                }
+
+                // Close mobile menu if open
+                mobileSidebar.classList.add("hidden");
+            }
+
+            // Load products from localStorage
+            function loadProducts() {
+                const savedProducts = localStorage.getItem("products");
+                if (savedProducts) {
+                    products = JSON.parse(savedProducts);
+                }
+
+                const savedSales = localStorage.getItem("sales");
+                if (savedSales) {
+                    sales = JSON.parse(savedSales);
+                }
+            }
+
+            // Save products to localStorage
+            function saveProducts() {
+                localStorage.setItem("products", JSON.stringify(products));
+            }
+
+            // Save sales to localStorage
+            function saveSales() {
+                localStorage.setItem("sales", JSON.stringify(sales));
+            }
+
+            // Render product grid for POS
+            function renderProductGrid() {
+                productGrid.innerHTML = "";
+
+                products.forEach((product) => {
+                    const productCard = document.createElement("div");
+                    productCard.className =
+                        "bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition cursor-pointer";
+                    productCard.innerHTML = `
+                    <div class="h-40 overflow-hidden">
+                        <img src="${
+                            product.image || "https://via.placeholder.com/150"
+                        }" alt="${
+                        product.name
+                    }" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-3">
+                        <h3 class="font-semibold text-gray-800 truncate">${
+                            product.name
+                        }</h3>
+                        <p class="text-sm text-gray-600">${product.category}</p>
+                        <div class="flex justify-between items-center mt-2">
+                            <span class="font-bold text-indigo-600">$${product.price.toFixed(
+                                2
+                            )}</span>
+                            <span class="text-xs text-gray-500">Stock: ${
+                                product.stock
+                            }</span>
+                        </div>
+                    </div>
+                `;
+
+                    productCard.addEventListener("click", () =>
+                        addToCart(product)
+                    );
+                    productGrid.appendChild(productCard);
+                });
+            }
+
+            // Render products table for management
+            function renderProductsTable() {
+                productsTableBody.innerHTML = "";
+
+                products.forEach((product) => {
+                    const row = document.createElement("tr");
+                    row.className = "hover:bg-gray-50";
+                    row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex-shrink-0 h-10 w-10">
+                            <img class="h-10 w-10 rounded-full" src="${
+                                product.image ||
+                                "https://via.placeholder.com/150"
+                            }" alt="${product.name}">
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${
+                            product.name
+                        }</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-500">${
+                            product.category
+                        }</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">$${product.price.toFixed(
+                            2
+                        )}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            product.stock > 10
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                        }">
+                            ${product.stock}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-product" data-id="${
+                            product.id
+                        }">Edit</button>
+                        <button class="text-red-600 hover:text-red-900 delete-product" data-id="${
+                            product.id
+                        }">Delete</button>
+                    </td>
+                `;
+
+                    productsTableBody.appendChild(row);
+                });
+
+                // Add event listeners to edit and delete buttons
+                document.querySelectorAll(".edit-product").forEach((btn) => {
+                    btn.addEventListener("click", (e) => {
+                        const productId = parseInt(
+                            e.target.getAttribute("data-id")
+                        );
+                        editProduct(productId);
+                    });
+                });
+
+                document.querySelectorAll(".delete-product").forEach((btn) => {
+                    btn.addEventListener("click", (e) => {
+                        const productId = parseInt(
+                            e.target.getAttribute("data-id")
+                        );
+                        deleteProduct(productId);
+                    });
+                });
+            }
+
+            // Add product to cart
+            function addToCart(product) {
+                if (product.stock <= 0) {
+                    alert("This product is out of stock!");
+                    return;
+                }
+
+                const existingItem = cart.find(
+                    (item) => item.id === product.id
+                );
+
+                if (existingItem) {
+                    if (existingItem.quantity < product.stock) {
+                        existingItem.quantity++;
+                    } else {
+                        alert("Cannot add more than available stock!");
+                        return;
+                    }
+                } else {
+                    cart.push({
+                        id: product.id,
+                        name: product.name,
+                        price: product.price,
+                        quantity: 1,
+                        image: product.image,
+                    });
+                }
+
+                updateCartUI();
+            }
+
+            // Update cart UI
+            function updateCartUI() {
+                cartItems.innerHTML = "";
+
+                if (cart.length === 0) {
+                    cartItems.innerHTML = `
+                    <div class="text-center text-gray-500 py-10">
+                        <i class="fas fa-shopping-cart text-4xl mb-2"></i>
+                        <p>Your cart is empty</p>
+                    </div>
+                `;
+
+                    subtotalEl.textContent = "$0.00";
+                    taxEl.textContent = "$0.00";
+                    totalEl.textContent = "$0.00";
+
+                    checkoutBtn.disabled = true;
+                    printReceiptBtn.disabled = true;
+
+                    return;
+                }
+
+                let subtotal = 0;
+
+                cart.forEach((item) => {
+                    const itemTotal = item.price * item.quantity;
+                    subtotal += itemTotal;
+
+                    const cartItem = document.createElement("div");
+                    cartItem.className =
+                        "flex justify-between items-center p-3 border-b";
+                    cartItem.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-12 h-12 rounded-md overflow-hidden">
+                            <img src="${
+                                item.image || "https://via.placeholder.com/150"
+                            }" alt="${
+                        item.name
+                    }" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-800">${
+                                item.name
+                            }</h4>
+                            <p class="text-sm text-gray-600">$${item.price.toFixed(
+                                2
+                            )}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <button class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center decrease-quantity" data-id="${
+                            item.id
+                        }">
+                            <i class="fas fa-minus text-xs"></i>
+                        </button>
+                        <span class="font-medium">${item.quantity}</span>
+                        <button class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center increase-quantity" data-id="${
+                            item.id
+                        }">
+                            <i class="fas fa-plus text-xs"></i>
+                        </button>
+                        <button class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center remove-item" data-id="${
+                            item.id
+                        }">
+                            <i class="fas fa-trash-alt text-xs"></i>
+                        </button>
+                    </div>
+                `;
+
+                    cartItems.appendChild(cartItem);
+                });
+
+                // Add event listeners to quantity buttons
+                document
+                    .querySelectorAll(".increase-quantity")
+                    .forEach((btn) => {
+                        btn.addEventListener("click", (e) => {
+                            const productId = parseInt(
+                                e.target
+                                    .closest("button")
+                                    .getAttribute("data-id")
+                            );
+                            const cartItem = cart.find(
+                                (item) => item.id === productId
+                            );
+                            const product = products.find(
+                                (p) => p.id === productId
+                            );
+
+                            if (cartItem.quantity < product.stock) {
+                                cartItem.quantity++;
+                                updateCartUI();
+                            } else {
+                                alert("Cannot add more than available stock!");
+                            }
+                        });
+                    });
+
+                document
+                    .querySelectorAll(".decrease-quantity")
+                    .forEach((btn) => {
+                        btn.addEventListener("click", (e) => {
+                            const productId = parseInt(
+                                e.target
+                                    .closest("button")
+                                    .getAttribute("data-id")
+                            );
+                            const cartItem = cart.find(
+                                (item) => item.id === productId
+                            );
+
+                            if (cartItem.quantity > 1) {
+                                cartItem.quantity--;
+                            } else {
+                                cart = cart.filter(
+                                    (item) => item.id !== productId
+                                );
+                            }
+
+                            updateCartUI();
+                        });
+                    });
+
+                document.querySelectorAll(".remove-item").forEach((btn) => {
+                    btn.addEventListener("click", (e) => {
+                        const productId = parseInt(
+                            e.target.closest("button").getAttribute("data-id")
+                        );
+                        cart = cart.filter((item) => item.id !== productId);
+                        updateCartUI();
+                    });
+                });
+
+                const tax = subtotal * 0.1;
+                const total = subtotal + tax;
+
+                subtotalEl.textContent = `$${subtotal.toFixed(2)}`;
+                taxEl.textContent = `$${tax.toFixed(2)}`;
+                totalEl.textContent = `$${total.toFixed(2)}`;
+
+                checkoutBtn.disabled = false;
+                printReceiptBtn.disabled = false;
+            }
+
+            // Open product modal for adding new product
+            function openAddProductModal() {
+                productIdInput.value = "";
+                productNameInput.value = "";
+                productCategoryInput.value = "";
+                productPriceInput.value = "";
+                productStockInput.value = "";
+                productImageInput.value = "";
+                modalTitle.textContent = "Add New Product";
+                productModal.classList.remove("hidden");
+            }
+
+            // Open product modal for editing
+            function editProduct(id) {
+                const product = products.find((p) => p.id === id);
+
+                if (product) {
+                    productIdInput.value = product.id;
+                    productNameInput.value = product.name;
+                    productCategoryInput.value = product.category;
+                    productPriceInput.value = product.price;
+                    productStockInput.value = product.stock;
+                    productImageInput.value = product.image || "";
+                    modalTitle.textContent = "Edit Product";
+                    productModal.classList.remove("hidden");
+                }
+            }
+
+            // Delete product
+            function deleteProduct(id) {
+                if (confirm("Are you sure you want to delete this product?")) {
+                    products = products.filter((p) => p.id !== id);
+                    saveProducts();
+                    renderProductGrid();
+                    renderProductsTable();
+                }
+            }
+
+            // Checkout
+            function checkout() {
+                if (cart.length === 0) return;
+
+                // Update product stock
+                cart.forEach((cartItem) => {
+                    const product = products.find((p) => p.id === cartItem.id);
+                    if (product) {
+                        product.stock -= cartItem.quantity;
+                    }
+                });
+
+                // Create sale record
+                const subtotal = cart.reduce(
+                    (sum, item) => sum + item.price * item.quantity,
+                    0
+                );
+                const tax = subtotal * 0.1;
+                const total = subtotal + tax;
+
+                const sale = {
+                    id: Date.now(),
+                    date: new Date(),
+                    items: [...cart],
+                    subtotal,
+                    tax,
+                    total,
+                };
+
+                sales.push(sale);
+                saveProducts();
+                saveSales();
+
+                // Clear cart
+                cart = [];
+                updateCartUI();
+
+                // Show receipt
+                showReceipt(sale);
+
+                // Update UI
+                renderProductGrid();
+                renderProductsTable();
+                updateSalesSummary();
+            }
+
+            // Show receipt
+            function showReceipt(sale) {
+                receiptItems.innerHTML = "";
+
+                sale.items.forEach((item) => {
+                    const itemTotal = item.price * item.quantity;
+
+                    const itemRow = document.createElement("div");
+                    itemRow.className = "grid grid-cols-12 gap-2 text-sm mb-1";
+                    itemRow.innerHTML = `
+                    <div class="col-span-6 truncate">${item.name}</div>
+                    <div class="col-span-2 text-right">${item.quantity}</div>
+                    <div class="col-span-2 text-right">$${item.price.toFixed(
+                        2
+                    )}</div>
+                    <div class="col-span-2 text-right">$${itemTotal.toFixed(
+                        2
+                    )}</div>
+                `;
+
+                    receiptItems.appendChild(itemRow);
+                });
+
+                receiptSubtotal.textContent = `$${sale.subtotal.toFixed(2)}`;
+                receiptTax.textContent = `$${sale.tax.toFixed(2)}`;
+                receiptTotal.textContent = `$${sale.total.toFixed(2)}`;
+
+                const now = new Date();
+                receiptDate.textContent = now.toLocaleString();
+                receiptOrderId.textContent = `ORD-${sale.id
+                    .toString()
+                    .slice(-5)}`;
+
+                receiptModal.classList.remove("hidden");
+            }
+
+            // Update sales summary
+            function updateSalesSummary() {
+                const now = new Date();
+                const today = new Date(
+                    now.getFullYear(),
+                    now.getMonth(),
+                    now.getDate()
+                );
+                const weekAgo = new Date(
+                    now.getFullYear(),
+                    now.getMonth(),
+                    now.getDate() - 7
+                );
+                const monthAgo = new Date(
+                    now.getFullYear(),
+                    now.getMonth() - 1,
+                    now.getDate()
+                );
+
+                const todaySales = sales
+                    .filter((sale) => new Date(sale.date) >= today)
+                    .reduce((sum, sale) => sum + sale.total, 0);
+
+                const weekSales = sales
+                    .filter((sale) => new Date(sale.date) >= weekAgo)
+                    .reduce((sum, sale) => sum + sale.total, 0);
+
+                const monthSales = sales
+                    .filter((sale) => new Date(sale.date) >= monthAgo)
+                    .reduce((sum, sale) => sum + sale.total, 0);
+
+                todaySalesEl.textContent = todaySales.toFixed(2);
+                weekSalesEl.textContent = weekSales.toFixed(2);
+                monthSalesEl.textContent = monthSales.toFixed(2);
+
+                // Update chart if it exists
+                if (window.salesChart) {
+                    updateSalesChart();
+                } else {
+                    initializeSalesChart();
+                }
+            }
+
+            // Initialize sales chart
+            function initializeSalesChart() {
+                const ctx = document
+                    .getElementById("sales-chart")
+                    .getContext("2d");
+
+                // Group sales by day for the last 7 days
+                const dates = [];
+                const salesData = [];
+
+                for (let i = 6; i >= 0; i--) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    const dateStr = date.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                    });
+                    dates.push(dateStr);
+
+                    const daySales = sales
+                        .filter((sale) => {
+                            const saleDate = new Date(sale.date);
+                            return (
+                                saleDate.getDate() === date.getDate() &&
+                                saleDate.getMonth() === date.getMonth() &&
+                                saleDate.getFullYear() === date.getFullYear()
+                            );
+                        })
+                        .reduce((sum, sale) => sum + sale.total, 0);
+
+                    salesData.push(daySales);
+                }
+
+                window.salesChart = new Chart(ctx, {
+                    type: "bar",
+                    data: {
+                        labels: dates,
+                        datasets: [
+                            {
+                                label: "Daily Sales ($)",
+                                data: salesData,
+                                backgroundColor: "rgba(79, 70, 229, 0.7)",
+                                borderColor: "rgba(79, 70, 229, 1)",
+                                borderWidth: 1,
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                            },
+                        },
+                    },
+                });
+            }
+
+            // Update sales chart
+            function updateSalesChart() {
+                const dates = [];
+                const salesData = [];
+
+                for (let i = 6; i >= 0; i--) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    const dateStr = date.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                    });
+                    dates.push(dateStr);
+
+                    const daySales = sales
+                        .filter((sale) => {
+                            const saleDate = new Date(sale.date);
+                            return (
+                                saleDate.getDate() === date.getDate() &&
+                                saleDate.getMonth() === date.getMonth() &&
+                                saleDate.getFullYear() === date.getFullYear()
+                            );
+                        })
+                        .reduce((sum, sale) => sum + sale.total, 0);
+
+                    salesData.push(daySales);
+                }
+
+                window.salesChart.data.labels = dates;
+                window.salesChart.data.datasets[0].data = salesData;
+                window.salesChart.update();
+            }
+
+            // Event Listeners
+            posTab.addEventListener("click", () => showTab("pos"));
+            productsTab.addEventListener("click", () => showTab("products"));
+            salesTab.addEventListener("click", () => showTab("sales"));
+
+            mobilePosTab.addEventListener("click", () => showTab("pos"));
+            mobileProductsTab.addEventListener("click", () =>
+                showTab("products")
+            );
+            mobileSalesTab.addEventListener("click", () => showTab("sales"));
+
+            addProductBtn.addEventListener("click", openAddProductModal);
+            checkoutBtn.addEventListener("click", checkout);
+            printReceiptBtn.addEventListener("click", () => {
+                if (cart.length > 0) {
+                    const subtotal = cart.reduce(
+                        (sum, item) => sum + item.price * item.quantity,
+                        0
+                    );
+                    const tax = subtotal * 0.1;
+                    const total = subtotal + tax;
+
+                    const tempSale = {
+                        id: Date.now(),
+                        date: new Date(),
+                        items: [...cart],
+                        subtotal,
+                        tax,
+                        total,
+                    };
+
+                    showReceipt(tempSale);
+                }
+            });
+
+            clearCartBtn.addEventListener("click", () => {
+                if (
+                    cart.length > 0 &&
+                    confirm("Are you sure you want to clear the cart?")
+                ) {
+                    cart = [];
+                    updateCartUI();
+                }
+            });
+
+            closeModalBtn.addEventListener("click", () => {
+                productModal.classList.add("hidden");
+            });
+
+            cancelProductBtn.addEventListener("click", () => {
+                productModal.classList.add("hidden");
+            });
+
+            closeReceiptBtn.addEventListener("click", () => {
+                receiptModal.classList.add("hidden");
+            });
+
+            printReceiptBtnModal.addEventListener("click", () => {
+                window.print();
+            });
+
+            productForm.addEventListener("submit", (e) => {
+                e.preventDefault();
+
+                const id = productIdInput.value
+                    ? parseInt(productIdInput.value)
+                    : Date.now();
+                const name = productNameInput.value;
+                const category = productCategoryInput.value;
+                const price = parseFloat(productPriceInput.value);
+                const stock = parseInt(productStockInput.value);
+                const image = productImageInput.value;
+
+                const product = {
+                    id,
+                    name,
+                    category,
+                    price,
+                    stock,
+                    image: image || undefined,
+                };
+
+                if (productIdInput.value) {
+                    // Update existing product
+                    const index = products.findIndex((p) => p.id === id);
+                    if (index !== -1) {
+                        products[index] = product;
+                    }
+                } else {
+                    // Add new product
+                    products.push(product);
+                }
+
+                saveProducts();
+                renderProductGrid();
+                renderProductsTable();
+                productModal.classList.add("hidden");
+            });
+
+            // Mobile menu toggle
+            mobileMenuToggle.addEventListener("click", () => {
+                mobileSidebar.classList.remove("hidden");
+                setTimeout(() => {
+                    document
+                        .querySelector("#mobile-sidebar > div")
+                        .classList.remove("translate-x-full");
+                }, 10);
+            });
+
+            closeMobileMenu.addEventListener("click", () => {
+                document
+                    .querySelector("#mobile-sidebar > div")
+                    .classList.add("translate-x-full");
+                setTimeout(() => {
+                    mobileSidebar.classList.add("hidden");
+                }, 300);
+            });
+
+            // Toggle dark mode
+            toggleThemeBtn.addEventListener("click", () => {
+                isDarkMode = !isDarkMode;
+
+                if (isDarkMode) {
+                    document.documentElement.classList.add("dark");
+                    toggleThemeBtn.innerHTML = '<i class="fas fa-sun"></i>';
+                } else {
+                    document.documentElement.classList.remove("dark");
+                    toggleThemeBtn.innerHTML = '<i class="fas fa-moon"></i>';
+                }
+            });
+        </script>
+
+        <!-- Chart.js -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    </body>
+</html>
