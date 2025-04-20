@@ -25,7 +25,8 @@ Route::get('/', function () {
 
 Route::resource('dashboard', DashboardController::class);
 // Route::resource('categories', CategoriesController::class);
-// Route::resource('products', ProductController::class);
+Route::resource('products', ProductController::class);
+Route::get('/product/get-all', [ProductController::class, 'getProduct']);
 // route::resource('pos', TransactionController::class);
 
 // Route::get('get-product/{id}', [TransactionController::class, 'getProduct']);

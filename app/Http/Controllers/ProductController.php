@@ -11,14 +11,20 @@ use RealRashid\SweetAlert\Facades\Alert;
 
 class ProductController extends Controller
 {
+
+    public function getProduct()
+    {
+        $datas = Products::get();
+        return response()->json($datas->toArray());
+    }
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
         $title = "Data Products";
-        $datas = Products::with('category')->get();
-        return view('products.index', compact('title', 'datas'));
+        $products = Products::get();
+        return view('products.index', compact('products'));
     }
 
     /**
@@ -36,16 +42,19 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $data = [
-            'category_id' => $request->category_id,
-            'product_name' => $request->product_name,
-            'product_price' => $request->product_price,
-            'product_description' => $request->product_description,
-            'is_active' => $request->is_active,
+            // 'category_id' => $request->category_id,
+            'name' => $request->name,
+            'price' => $request->price,
+            'image' => $request->image,
+            'stock' => $request->stock,
+            'category' => 'Product',
+            'description' => $request->description,
+            'is_active' => true,
         ];
-        if($request->hasFile('product_photo')) {
-            $photo = $request->file('product_photo')->store('products', 'public');
-            $data['product_photo'] = $photo;
-        }
+        // if($request->hasFile('product_photo')) {
+        //     $photo = $request->file('product_photo')->store('products', 'public');
+        //     $data['product_photo'] = $photo;
+        // }
 
         Products::create($data);
 
@@ -64,25 +73,26 @@ class ProductController extends Controller
     {
         $product = Products::find($id);
 
-    $product->category_id = $request->category_id;
-    $product->product_name = $request->product_name;
-    $product->product_price = $request->product_price;
-    $product->product_description = $request->product_description;
-    $product->is_active = $request->is_active;
+        $product->id = $id;
+        $product->name = $request->name;
+        $product->price = $request->price;
+        $product->description = $request->description;
+        $product->stock = $request->stock;
+    // $product->is_active = $request->is_active;
 
 
-    if ($request->hasFile('product_photo')) {
-        if ($product->product_photo) {
-            File::delete(public_path('storage/' . $product->product_photo));
-        }
+    // if ($request->hasFile('product_photo')) {
+    //     if ($product->product_photo) {
+    //         File::delete(public_path('storage/' . $product->product_photo));
+    //     }
 
-        $photo = $request->file('product_photo')->store('products', 'public');
-        $product->product_photo = $photo;
-    }
+    //     $photo = $request->file('product_photo')->store('products', 'public');
+    //     $product->product_photo = $photo;
+    // }
 
-    $product->save();
-    Alert::image('Product Updated!','Product update was successful!',
-    asset('storage/products/download.jpg'),'500px','250px','Product Success Image');
+        $product->save();
+    // Alert::image('Product Updated!','Product update was successful!',
+    // asset('storage/products/download.jpg'),'500px','250px','Product Success Image');
 
 
     return redirect()->route('products.index');
@@ -92,7 +102,7 @@ class ProductController extends Controller
     public function destroy(string $id)
     {
         $product = Products::find($id);
-        File::delete(public_path('storage/' . $product->product_photo));
+        // File::delete(public_path('storage/' . $product->product_photo));
         $product->delete();
         return redirect()->route('products.index')->with('success', 'Product deleted successfully');
     }
